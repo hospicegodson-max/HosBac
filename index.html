@@ -1820,7 +1820,7 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Create user document in Firestore
+                // Create user document in Firestore avec tous les champs requis
                 await usersRef.doc(user.uid).set({
                     name: name,
                     email: email,
@@ -1832,8 +1832,8 @@
                     downloads: 0,
                     favorites: [],
                     downloadedExams: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    isAdmin: email === "mickaelpcs14@gmail.com"
+                    role: email === "mickaelpcs14@gmail.com" ? "admin" : "user", // Correction du rôle admin
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
                 showToast('Inscription réussie!', 'success');
@@ -1893,9 +1893,11 @@
                     userData = userDoc.data();
                     userData.id = uid;
                     
-                    // Check if admin
-                    if (userData.isAdmin) {
+                    // Check if admin - CORRECTION: Vérifier le champ 'role' au lieu de 'isAdmin'
+                    if (userData.role === "admin") {
                         adminNav.style.display = 'block';
+                    } else {
+                        adminNav.style.display = 'none';
                     }
                     
                     updateUserInfo();
@@ -1943,7 +1945,7 @@
             }
         }
 
-        // Exam Management
+        // Exam Management - CORRECTION: Structure des données pour respecter les règles de sécurité
         async function handleAddExam(e) {
             e.preventDefault();
             const subject = document.getElementById('subject').value;
@@ -1970,7 +1972,7 @@
                     solutionFileUrl = await uploadToCloudinary(solutionFile);
                 }
                 
-                // Create exam document in Firestore
+                // CORRECTION: Créer l'objet exam avec tous les champs requis pour les règles de sécurité
                 const examData = {
                     subject: subject,
                     class: classValue,
@@ -1978,12 +1980,12 @@
                     name: examName,
                     examFileUrl: examFileUrl,
                     solutionFileUrl: solutionFileUrl,
-                    authorId: currentUser.uid,
+                    authorId: currentUser.uid, // Champ requis par les règles
                     authorName: userData.name,
                     points: solutionFileUrl ? 2 : 0,
-                    approved: userData.isAdmin, // Auto-approve if admin
-                    date: firebase.firestore.FieldValue.serverTimestamp(),
-                    downloads: 0,
+                    approved: userData.role === "admin", // Auto-approve if admin
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // Champ requis par les règles
+                    downloads: 0, // Champ requis par les règles - initialisé à 0
                     favorites: 0,
                     favoritedBy: []
                 };
@@ -1997,14 +1999,18 @@
                 });
                 
                 // Add notification for admin if not admin
-                if (!userData.isAdmin) {
-                    await notificationsRef.add({
-                        title: "Nouvelle soumission",
-                        message: `${userData.name} a soumis une nouvelle épreuve: ${examName}`,
-                        time: new Date(),
-                        type: "submission",
-                        read: false,
-                        userId: "admin" // This would need to be the actual admin user ID
+                if (userData.role !== "admin") {
+                    // CORRECTION: Trouver les utilisateurs admin pour leur envoyer une notification
+                    const adminUsers = await usersRef.where("role", "==", "admin").get();
+                    adminUsers.forEach((adminDoc) => {
+                        notificationsRef.add({
+                            title: "Nouvelle soumission",
+                            message: `${userData.name} a soumis une nouvelle épreuve: ${examName}`,
+                            time: new Date(),
+                            type: "submission",
+                            read: false,
+                            userId: adminDoc.id
+                        });
                     });
                 }
                 
@@ -2048,16 +2054,18 @@
             });
         }
 
+        // CORRECTION: Chargement des épreuves avec une requête simple
         async function loadExams() {
             try {
                 let query = examsRef;
                 
-                // If not admin, only show approved exams
-                if (!userData.isAdmin) {
+                // Si l'utilisateur n'est pas admin, seulement montrer les épreuves approuvées
+                if (userData.role !== "admin") {
                     query = query.where("approved", "==", true);
                 }
                 
-                const querySnapshot = await query.orderBy("date", "desc").get();
+                // CORRECTION: Requête simple avec tri par timestamp
+                const querySnapshot = await query.orderBy("timestamp", "desc").get();
                 exams = [];
                 pendingSubmissions = [];
                 
@@ -2328,7 +2336,7 @@
             renderExamsPage();
             renderProfilePage();
             
-            if (userData && userData.isAdmin) {
+            if (userData && userData.role === "admin") {
                 renderAdminPage();
             }
         }
@@ -2561,7 +2569,7 @@
                             <strong>${submission.subject}</strong> - ${submission.class} ${submission.serie}<br>
                             Soumis par: ${submission.authorName}
                         </div>
-                        <div class="notification-time">${formatDate(submission.date)}</div>
+                        <div class="notification-time">${formatDate(submission.timestamp)}</div>
                     </div>
                     <div class="notification-actions">
                         <button class="btn-icon approve-submission" data-id="${submission.id}">
@@ -2611,7 +2619,7 @@
                         <button class="btn-icon transfer-exam" data-id="${exam.id}">
                             <i class="fas fa-share-alt"></i>
                         </button>
-                        ${userData.isAdmin ? `<button class="btn-icon delete-exam" data-id="${exam.id}">
+                        ${userData.role === "admin" ? `<button class="btn-icon delete-exam" data-id="${exam.id}">
                             <i class="fas fa-trash"></i>
                         </button>` : ''}
                     </div>
@@ -2766,7 +2774,7 @@
             window.location.hash = page;
             
             // Render specific page content if needed
-            if (page === 'admin' && userData && userData.isAdmin) {
+            if (page === 'admin' && userData && userData.role === "admin") {
                 renderAdminPage();
             } else if (page === 'notifications') {
                 renderNotifications();
