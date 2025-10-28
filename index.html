@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBac - Épreuves et corrigés du BAC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+    
+    <!-- Cloudinary SDK -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    
+    <style>
+        :root {
+            --primary-blue: #1a237e;
+            --deep-blue: #0d1440;
+            --accent-red: #e53935;
+            --light-blue: #e8eaf6;
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            transform: skew(-5deg);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo span {
+            color: var(--accent-red);
+        }
+
+        .loading-icons {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 2rem;
+            margin-top: 1rem;
+        }
+
+        .loading-icons i {
+            animation: bounce 2s infinite;
+        }
+
+        .loading-icons i:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-icons i:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .loading-icons i:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+
+        .loading-icons i:nth-child(5) {
+            animation-delay: 0.8s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 0;
+            background: rgba(13, 20, 64, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-small {
+            font-size: 1.8rem;
+            font-weight: 700;
+            transform: skew(-5deg);
+        }
+
+        .logo-small span {
+            color: var(--accent-red);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        nav a:hover, nav a.active {
+            background: var(--glass-bg);
+        }
+
+        nav i {
+            font-size: 1.2rem;
+        }
+
+        .nav-text {
+            font-size: 0.8rem;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .points-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .exams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .exam-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .exam-subject {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .exam-class {
+            background: var(--glass-bg);
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .exam-name {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+
+        .exam-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c62828;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 50%;
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background: var(--glass-bg);
+            transform: scale(1.1);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            border-radius: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-red);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='white' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem top 50%;
+            background-size: 0.65rem auto;
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload-btn {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px dashed var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            background: white;
+            cursor: pointer;
+            display: block;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            transform: skew(-5deg);
+        }
+
+        .footer-logo span {
+            color: var(--accent-red);
+        }
+
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .social-icon:hover {
+            background: var(--accent-red);
+            transform: translateY(-3px);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            color: var(--accent-red);
+        }
+
+        .copyright {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 1rem;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .tab-container {
+            margin-top: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .admin-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            opacity: 0.7;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+        }
+
+        .transfer-modal {
+            max-width: 400px;
+        }
+
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .user-email {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            background: var(--accent-red);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        .toast.info {
+            background: #2196f3;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .exam-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .profile-form {
+            display: none;
+        }
+
+        .profile-form.active {
+            display: block;
+        }
+
+        .profile-display {
+            display: block;
+        }
+
+        .profile-display.hidden {
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                gap: 0.8rem;
+            }
+            
+            .nav-text {
+                display: none;
+            }
+            
+            .exams-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .exams-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="logo">Hos<span>Bac</span></div>
+        <div class="loading-icons">
+            <i class="fas fa-book"></i>
+            <i class="fas fa-pen"></i>
+            <i class="fas fa-school"></i>
+            <i class="fas fa-graduation-cap"></i>
+            <i class="fas fa-search"></i>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div class="modal" id="warningModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">🔒 Avertissement – Utilisation responsable</h2>
+                <!-- Supprimé le bouton de fermeture pour forcer l'acceptation -->
+            </div>
+            <p>La plateforme HosBac est un espace éducatif collaboratif conçu pour faciliter l'accès aux épreuves gratuites et encourager le partage entre utilisateurs. En publiant des épreuves, vous gagnez des points qui vous permettent d'obtenir les corrigés disponibles.</p>
+            <br>
+            <p><strong>📌 Nous rappelons que :</strong></p>
+            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Toute publication doit respecter les règles de qualité et d'authenticité.</li>
+                <li>Les corrigés sont destinés à un usage pédagogique uniquement.</li>
+                <li>Toute tentative de fraude, de duplication abusive ou de contournement du système de points entraînera une suspension immédiate du compte.</li>
+            </ul>
+            <br>
+            <p>🎓 HosBac valorise l'apprentissage équitable, la transparence et la contribution active de sa communauté. Merci de participer avec intégrité.</p>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" id="acceptBtn">J'accepte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Connexion</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" class="form-control" placeholder="Votre email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Mot de passe</label>
+                    <input type="password" id="password" class="form-control" placeholder="Votre mot de passe" required>
+                </div>
+                <div style="text-align: right; margin-bottom: 1.5rem;">
+                    <a href="#" id="forgotPassword" style="color: var(--accent-red); text-decoration: none; font-size: 0.9rem;">Mot de passe oublié ?</a>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">
+                    <span id="loginBtnText">Se connecter</span>
+                    <div class="loading" id="loginLoading" style="display: none;"></div>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p>Pas encore de compte ? <a href="#" id="showRegister" style="color: var(--accent-red); text-decoration: none;">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Inscription</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="regName">Nom complet</label>
+                    <input type="text" id="regName" class="form-control" placeholder="Votre nom complet" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regEmail">Email</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="Votre email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regSchool">École</label>
+                    <input type="text" id="regSchool" class="form-control" placeholder="Votre école" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regClass">Classe</label>
+                    <select id="regClass" class="form-control form-select" required>
+                        <option value="">Sélectionnez votre classe</option>
+                        <option value="6ème">6ème</option>
+                        <option value="5ème">5ème</option>
+                        <option value="4ème">4ème</option>
+                        <option value="3ème">3ème</option>
+                        <option value="Seconde">Seconde</option>
+                        <option value="Première">Première</option>
+                        <option value="Terminale">Terminale</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regPassword">Mot de passe</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="Créez un mot de passe" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regConfirmPassword">Confirmer le mot de passe</label>
+                    <input type="password" id="regConfirmPassword" class="form-control" placeholder="Confirmez votre mot de passe" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="registerBtn">
+                    <span id="registerBtnText">S'inscrire</span>
+                    <div class="loading" id="registerLoading" style="display: none;"></div>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p>Déjà un compte ? <a href="#" id="showLogin" style="color: var(--accent-red); text-decoration: none;">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Mot de passe oublié</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label class="form-label" for="forgotEmail">Email</label>
+                    <input type="email" id="forgotEmail" class="form-control" placeholder="Votre email" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="forgotPasswordBtn">
+                    <span id="forgotPasswordBtnText">Envoyer le lien de réinitialisation</span>
+                    <div class="loading" id="forgotPasswordLoading" style="display: none;"></div>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p><a href="#" id="backToLogin" style="color: var(--accent-red); text-decoration: none;">Retour à la connexion</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Exam Modal -->
+    <div class="modal" id="addExamModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Ajouter une épreuve</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="addExamForm">
+                <div class="form-group">
+                    <label class="form-label" for="subject">Matière</label>
+                    <select id="subject" class="form-control form-select" required>
+                        <option value="">Sélectionnez une matière</option>
+                        <option value="Mathématique">Mathématique</option>
+                        <option value="Français">Français</option>
+                        <option value="SVT">SVT</option>
+                        <option value="PCT">PCT</option>
+                        <option value="Espagnol">Espagnol</option>
+                        <option value="Histoire-Géographie">Histoire-Géographie</option>
+                        <option value="Allemand">Allemand</option>
+                        <option value="Économie">Économie</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="Comptabilité">Comptabilité</option>
+                        <option value="T-bad">T-bad</option>
+                        <option value="Philosophie">Philosophie</option>
+                        <option value="Droit">Droit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="class">Classe</label>
+                    <input type="text" id="class" class="form-control" placeholder="Ex: Terminale" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="serie">Série</label>
+                    <select id="serie" class="form-control form-select" required>
+                        <option value="">Sélectionnez une série</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="G">G</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="examName">Nom de l'épreuve</label>
+                    <input type="text" id="examName" class="form-control" placeholder="Ex: BAC 2023 Mathématique" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="examFile">Fichier PDF Épreuve</label>
+                    <div class="file-upload">
+                        <div class="file-upload-btn" id="examFileBtn">Choisir un fichier</div>
+                        <input type="file" id="examFile" accept=".pdf" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="solutionFile">Fichier PDF Corrigé (facultatif)</label>
+                    <div class="file-upload">
+                        <div class="file-upload-btn" id="solutionFileBtn">Choisir un fichier</div>
+                        <input type="file" id="solutionFile" accept=".pdf">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitExamBtn">
+                    <span id="submitExamBtnText">Soumettre</span>
+                    <div class="loading" id="submitExamLoading" style="display: none;"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Exam Modal -->
+    <div class="modal" id="transferModal">
+        <div class="modal-content glass-card transfer-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Transférer l'épreuve</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="searchUser">Rechercher un utilisateur</label>
+                <input type="text" id="searchUser" class="form-control" placeholder="Nom et prénom">
+            </div>
+            <div class="user-list" id="userList">
+                <!-- Users will be dynamically generated -->
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" id="transferBtn">Transférer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CGU Modal -->
+    <div class="modal" id="cguModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Conditions Générales d'Utilisation</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                <!-- CGU content remains the same -->
+                <p><strong>Dernière mise à jour : 26/10/2025</strong></p>
+                <p>Bienvenue sur HosBac ! En accédant à notre site web et en utilisant nos services, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation (CGU).</p>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">1. Objet de la Plateforme</h3>
+                <p>HosBac est une plateforme éducative conçue pour aider les élèves et étudiants (du Collège au Lycée, classes de 6ème à la Terminale, et préparant le BEPC et le BAC) en leur donnant accès à des épreuves, examens et corrigés. Les utilisateurs peuvent consulter, télécharger et publier des ressources pédagogiques.</p>
+                
+                <!-- Rest of CGU content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal" id="privacyModal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Politique de Confidentialité</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                <!-- Privacy Policy content remains the same -->
+                <p><strong>Dernière mise à jour : 26/10/2025</strong></p>
+                <p>La protection de vos données personnelles est une priorité pour HosBac. Cette politique décrit quelles informations nous collectons et comment nous les utilisons.</p>
+                
+                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">1. Quelles données collectons-nous ?</h3>
+                <p>Nous collectons deux types d'informations :</p>
+                <p><strong>Données fournies lors de l'inscription :</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Nom et Prénom</li>
+                    <li>Adresse email</li>
+                    <li>Mot de passe (stocké de manière chiffrée/hachée)</li>
+                </ul>
+                <!-- Rest of Privacy Policy content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Main App (visible after login) -->
+    <div id="app" style="display: none;">
+        <!-- Header -->
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-small">Hos<span>Bac</span></div>
+                    <nav>
+                        <ul>
+                            <li><a href="#accueil" class="nav-link active" data-page="accueil"><i class="fas fa-home"></i> <span class="nav-text">Accueil</span></a></li>
+                            <li><a href="#notifications" class="nav-link" data-page="notifications"><i class="fas fa-bell"></i> <span class="nav-text">Notifications</span></a></li>
+                            <li><a href="#examens" class="nav-link" data-page="examens"><i class="fas fa-file-alt"></i> <span class="nav-text">Examens</span></a></li>
+                            <li><a href="#recherche" class="nav-link" data-page="recherche"><i class="fas fa-search"></i> <span class="nav-text">Recherche</span></a></li>
+                            <li><a href="#profil" class="nav-link" data-page="profil"><i class="fas fa-user"></i> <span class="nav-text">Profil</span></a></li>
+                            <li id="adminNav" style="display: none;"><a href="#admin" class="nav-link" data-page="admin"><i class="fas fa-crown"></i> <span class="nav-text">Admin</span></a></li>
+                        </ul>
+                    </nav>
+                    <div class="user-actions">
+                        <div class="points-badge" id="userPoints">0 pts</div>
+                        <div class="avatar" id="userAvatar">?</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <div class="container">
+                <!-- Accueil Page -->
+                <div id="accueil" class="page active">
+                    <h1 class="page-title">Épreuves récentes</h1>
+                    <div class="exams-grid" id="homeExamsGrid">
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <h3>Aucune épreuve disponible</h3>
+                            <p>Les épreuves approuvées apparaîtront ici</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Page -->
+                <div id="notifications" class="page">
+                    <h1 class="page-title">Notifications</h1>
+                    <div class="glass-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2>Activité récente</h2>
+                            <button class="btn btn-secondary" id="clearAllNotifications">Tout supprimer</button>
+                        </div>
+                        <div id="notificationsList">
+                            <div class="empty-state">
+                                <i class="fas fa-bell"></i>
+                                <h3>Aucune notification</h3>
+                                <p>Vos notifications apparaîtront ici</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examens Page -->
+                <div id="examens" class="page">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h1 class="page-title">Catalogue des épreuves</h1>
+                        <button class="btn btn-primary" id="addExamBtn"><i class="fas fa-plus"></i> Ajouter une épreuve</button>
+                    </div>
+                    <div class="glass-card" style="margin-bottom: 1.5rem;">
+                        <div class="filter-section">
+                            <select class="form-control filter-select" id="filterClass">
+                                <option value="">Toutes les classes</option>
+                                <option value="6ème">6ème</option>
+                                <option value="5ème">5ème</option>
+                                <option value="4ème">4ème</option>
+                                <option value="3ème">3ème</option>
+                                <option value="Seconde">Seconde</option>
+                                <option value="Première">Première</option>
+                                <option value="Terminale">Terminale</option>
+                            </select>
+                            <select class="form-control filter-select" id="filterSerie">
+                                <option value="">Toutes les séries</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="G">G</option>
+                            </select>
+                            <select class="form-control filter-select" id="filterSubject">
+                                <option value="">Toutes les matières</option>
+                                <option value="Mathématique">Mathématique</option>
+                                <option value="Français">Français</option>
+                                <option value="SVT">SVT</option>
+                                <option value="PCT">PCT</option>
+                                <option value="Espagnol">Espagnol</option>
+                                <option value="Histoire-Géographie">Histoire-Géographie</option>
+                                <option value="Allemand">Allemand</option>
+                                <option value="Économie">Économie</option>
+                                <option value="Anglais">Anglais</option>
+                                <option value="Comptabilité">Comptabilité</option>
+                                <option value="T-bad">T-bad</option>
+                                <option value="Philosophie">Philosophie</option>
+                                <option value="Droit">Droit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="exams-grid" id="examsGrid">
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <h3>Aucune épreuve disponible</h3>
+                            <p>Les épreuves approuvées apparaîtront ici</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recherche Page -->
+                <div id="recherche" class="page">
+                    <h1 class="page-title">Recherche</h1>
+                    <div class="glass-card" style="margin-bottom: 1.5rem;">
+                        <div class="search-bar">
+                            <div class="form-group search-input">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par nom, matière, classe...">
+                            </div>
+                            <button class="btn btn-primary" id="searchBtn"><i class="fas fa-search"></i> Rechercher</button>
+                        </div>
+                    </div>
+                    <div class="exams-grid" id="searchResults">
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>Aucun résultat</h3>
+                            <p>Utilisez la barre de recherche pour trouver des épreuves</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profil Page -->
+                <div id="profil" class="page">
+                    <h1 class="page-title">Profil</h1>
+                    
+                    <!-- Profile Display -->
+                    <div class="profile-display" id="profileDisplay">
+                        <div class="glass-card" style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                <div class="avatar" style="width: 80px; height: 80px; font-size: 1.5rem;" id="profileAvatar">?</div>
+                                <div>
+                                    <h2 id="userName">Utilisateur</h2>
+                                    <p id="userEmail">email@example.com</p>
+                                    <p id="userSchool">École</p>
+                                    <p id="userClass">Classe</p>
+                                    <div class="points-badge" style="display: inline-block; margin-top: 0.5rem;" id="profilePoints">0 points</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" id="editProfileBtn"><i class="fas fa-edit"></i> Modifier le profil</button>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="glass-card stat-card">
+                                <div class="stat-value" id="submittedExams">0</div>
+                                <div class="stat-label">Épreuves soumises</div>
+                            </div>
+                            <div class="glass-card stat-card">
+                                <div class="stat-value" id="submittedSolutions">0</div>
+                                <div class="stat-label">Corrigés soumis</div>
+                            </div>
+                            <div class="glass-card stat-card">
+                                <div class="stat-value" id="downloadsCount">0</div>
+                                <div class="stat-label">Téléchargements</div>
+                            </div>
+                            <div class="glass-card stat-card">
+                                <div class="stat-value" id="favoritesCount">0</div>
+                                <div class="stat-label">Favoris</div>
+                            </div>
+                        </div>
+
+                        <div class="tab-container">
+                            <div class="tabs">
+                                <div class="tab active" data-tab="favorites">Favoris</div>
+                                <div class="tab" data-tab="submissions">Mes soumissions</div>
+                                <div class="tab" data-tab="downloads">Épreuves téléchargées</div>
+                            </div>
+                            <div class="tab-content active" id="favoritesTab">
+                                <div class="exams-grid" id="favoritesGrid">
+                                    <div class="empty-state">
+                                        <i class="fas fa-heart"></i>
+                                        <h3>Aucun favori</h3>
+                                        <p>Les épreuves que vous ajoutez en favoris apparaîtront ici</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-content" id="submissionsTab">
+                                <div class="exams-grid" id="submissionsGrid">
+                                    <div class="empty-state">
+                                        <i class="fas fa-file-upload"></i>
+                                        <h3>Aucune soumission</h3>
+                                        <p>Les épreuves que vous soumettez apparaîtront ici</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-content" id="downloadsTab">
+                                <div class="exams-grid" id="downloadsGrid">
+                                    <div class="empty-state">
+                                        <i class="fas fa-download"></i>
+                                        <h3>Aucun téléchargement</h3>
+                                        <p>Les épreuves que vous téléchargez apparaîtront ici</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 2rem; text-align: center;">
+                            <button class="btn btn-secondary" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <div class="profile-form" id="profileForm">
+                        <div class="glass-card" style="margin-bottom: 1.5rem;">
+                            <h2 style="margin-bottom: 1.5rem;">Modifier le profil</h2>
+                            <form id="updateProfileForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="editName">Nom complet</label>
+                                    <input type="text" id="editName" class="form-control" placeholder="Votre nom complet" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="editSchool">École</label>
+                                    <input type="text" id="editSchool" class="form-control" placeholder="Votre école" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="editClass">Classe</label>
+                                    <select id="editClass" class="form-control form-select" required>
+                                        <option value="">Sélectionnez votre classe</option>
+                                        <option value="6ème">6ème</option>
+                                        <option value="5ème">5ème</option>
+                                        <option value="4ème">4ème</option>
+                                        <option value="3ème">3ème</option>
+                                        <option value="Seconde">Seconde</option>
+                                        <option value="Première">Première</option>
+                                        <option value="Terminale">Terminale</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                                    <button type="submit" class="btn btn-primary" style="flex: 1;" id="saveProfileBtn">
+                                        <span id="saveProfileBtnText">Enregistrer</span>
+                                        <div class="loading" id="saveProfileLoading" style="display: none;"></div>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelEditProfile" style="flex: 1;">Annuler</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Page -->
+                <div id="admin" class="page">
+                    <h1 class="page-title">Tableau de bord administrateur</h1>
+                    
+                    <div class="stats-grid">
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" id="adminUsersCount">0</div>
+                            <div class="stat-label">Utilisateurs</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" id="adminExamsCount">0</div>
+                            <div class="stat-label">Épreuves</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" id="adminSolutionsCount">0</div>
+                            <div class="stat-label">Corrigés</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" id="adminDownloadsCount">0</div>
+                            <div class="stat-label">Téléchargements</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="margin-top: 2rem;">
+                        <h2 style="margin-bottom: 1.5rem;">Modération des soumissions</h2>
+                        <div id="moderationList">
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <h3>Aucune soumission en attente</h3>
+                                <p>Les nouvelles soumissions d'épreuves apparaîtront ici</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-logo">Hos<span>Bac</span></div>
+                    <div class="footer-contact">
+                        <p>Email: mickaelpcs14@gmail.com</p>
+                        <p>Téléphone: +229 01 98 86 07 52</p>
+                    </div>
+                    <div class="footer-social">
+                        <a href="https://www.facebook.com/profile.php?id=61579985138308" class="social-icon" target="_blank">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://wa.me/qr/73EC225KOITDD1" class="social-icon" target="_blank">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="mailto:mickaelpcs14@gmail.com" class="social-icon">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link" id="showCgu">Conditions Générales d'Utilisation</a>
+                        <a href="#" class="footer-link" id="showPrivacy">Politique de Confidentialité</a>
+                    </div>
+                    <div class="copyright">
+                        &copy; 2025 HosBac. Tous droits réservés.
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgC2vbsKExHbZVc80b3jMq96besCglqM",
+            authDomain: "hosbac-729f3.firebaseapp.com",
+            projectId: "hosbac-729f3",
+            storageBucket: "hosbac-729f3.firebasestorage.app",
+            messagingSenderId: "577940206427",
+            appId: "1:577940206427:web:9416d06adb40d28fb3a07e",
+            measurementId: "G-LSX382NTGN"
+        };
+
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const functions = firebase.functions();
+
+        // Configuration Cloudinary
+        const cloudName = "dvlvj9zko";
+        const uploadPreset = "hosbac_pdf_upload";
+
+        // Variables globales
+        let currentUser = null;
+        let userData = null;
+        let exams = [];
+        let users = [];
+        let notifications = [];
+        let pendingSubmissions = [];
+
+        // Références aux collections Firestore
+        const usersRef = db.collection("users");
+        const examsRef = db.collection("exams");
+        const notificationsRef = db.collection("notifications");
+
+        // DOM Elements
+        const splashScreen = document.getElementById('splashScreen');
+        const warningModal = document.getElementById('warningModal');
+        const loginModal = document.getElementById('loginModal');
+        const registerModal = document.getElementById('registerModal');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const addExamModal = document.getElementById('addExamModal');
+        const transferModal = document.getElementById('transferModal');
+        const cguModal = document.getElementById('cguModal');
+        const privacyModal = document.getElementById('privacyModal');
+        const app = document.getElementById('app');
+        const acceptBtn = document.getElementById('acceptBtn');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const addExamForm = document.getElementById('addExamForm');
+        const addExamBtn = document.getElementById('addExamBtn');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        const showCgu = document.getElementById('showCgu');
+        const showPrivacy = document.getElementById('showPrivacy');
+        const adminNav = document.getElementById('adminNav');
+        const userPoints = document.getElementById('userPoints');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const userSchool = document.getElementById('userSchool');
+        const userClass = document.getElementById('userClass');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profilePoints = document.getElementById('profilePoints');
+        const clearAllNotifications = document.getElementById('clearAllNotifications');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const toast = document.getElementById('toast');
+        const backToLogin = document.getElementById('backToLogin');
+        const forgotPassword = document.getElementById('forgotPassword');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const userList = document.getElementById('userList');
+        const transferBtn = document.getElementById('transferBtn');
+        const searchUser = document.getElementById('searchUser');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const filterClass = document.getElementById('filterClass');
+        const filterSerie = document.getElementById('filterSerie');
+        const filterSubject = document.getElementById('filterSubject');
+        const profileDisplay = document.getElementById('profileDisplay');
+        const profileForm = document.getElementById('profileForm');
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const cancelEditProfile = document.getElementById('cancelEditProfile');
+        const updateProfileForm = document.getElementById('updateProfileForm');
+        const editName = document.getElementById('editName');
+        const editSchool = document.getElementById('editSchool');
+        const editClass = document.getElementById('editClass');
+
+        // Loading buttons
+        const loginBtn = document.getElementById('loginBtn');
+        const loginBtnText = document.getElementById('loginBtnText');
+        const loginLoading = document.getElementById('loginLoading');
+        const registerBtn = document.getElementById('registerBtn');
+        const registerBtnText = document.getElementById('registerBtnText');
+        const registerLoading = document.getElementById('registerLoading');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        const forgotPasswordBtnText = document.getElementById('forgotPasswordBtnText');
+        const forgotPasswordLoading = document.getElementById('forgotPasswordLoading');
+        const submitExamBtn = document.getElementById('submitExamBtn');
+        const submitExamBtnText = document.getElementById('submitExamBtnText');
+        const submitExamLoading = document.getElementById('submitExamLoading');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const saveProfileBtnText = document.getElementById('saveProfileBtnText');
+        const saveProfileLoading = document.getElementById('saveProfileLoading');
+
+        // File upload buttons
+        const examFileBtn = document.getElementById('examFileBtn');
+        const solutionFileBtn = document.getElementById('solutionFileBtn');
+
+        // Initialize the app
+        function initApp() {
+            // Hide splash screen after 4 seconds
+            setTimeout(() => {
+                splashScreen.style.opacity = '0';
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    
+                    // Vérifier si l'utilisateur a déjà accepté l'avertissement
+                    const hasAcceptedWarning = localStorage.getItem('hosbac-warning-accepted');
+                    
+                    // Vérifier si l'utilisateur est déjà connecté
+                    if (auth.currentUser) {
+                        // User is already logged in, show app directly
+                        loadUserData(auth.currentUser.uid);
+                        app.style.display = 'block';
+                    } else if (hasAcceptedWarning) {
+                        // User has accepted warning but not logged in
+                        loginModal.classList.add('active');
+                    } else {
+                        // User is not logged in and hasn't accepted warning
+                        warningModal.classList.add('active');
+                    }
+                }, 500);
+            }, 4000);
+
+            // Event listeners
+            acceptBtn.addEventListener('click', () => {
+                // Stocker l'acceptation dans le localStorage
+                localStorage.setItem('hosbac-warning-accepted', 'true');
+                warningModal.classList.remove('active');
+                loginModal.classList.add('active');
+            });
+
+            showRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginModal.classList.remove('active');
+                registerModal.classList.add('active');
+            });
+
+            showLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                registerModal.classList.remove('active');
+                loginModal.classList.add('active');
+            });
+
+            forgotPassword.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginModal.classList.remove('active');
+                forgotPasswordModal.classList.add('active');
+            });
+
+            backToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                forgotPasswordModal.classList.remove('active');
+                loginModal.classList.add('active');
+            });
+
+            loginForm.addEventListener('submit', handleLogin);
+            registerForm.addEventListener('submit', handleRegister);
+            forgotPasswordForm.addEventListener('submit', handleForgotPassword);
+
+            addExamBtn.addEventListener('click', () => {
+                addExamModal.classList.add('active');
+            });
+
+            addExamForm.addEventListener('submit', handleAddExam);
+
+            // Navigation
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.getAttribute('data-page');
+                    navigateTo(page);
+                });
+            });
+
+            // Close modals
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Fermer toutes les modales sauf l'avertissement
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        if (modal.id !== 'warningModal') {
+                            modal.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            // Legal modals
+            showCgu.addEventListener('click', (e) => {
+                e.preventDefault();
+                cguModal.classList.add('active');
+            });
+
+            showPrivacy.addEventListener('click', (e) => {
+                e.preventDefault();
+                privacyModal.classList.add('active');
+            });
+
+            // Clear notifications
+            clearAllNotifications.addEventListener('click', () => {
+                if (currentUser) {
+                    notificationsRef
+                        .where("userId", "==", currentUser.uid)
+                        .get()
+                        .then((querySnapshot) => {
+                            const batch = db.batch();
+                            querySnapshot.forEach((doc) => {
+                                batch.delete(doc.ref);
+                            });
+                            return batch.commit();
+                        })
+                        .then(() => {
+                            showToast('Toutes les notifications ont été supprimées', 'info');
+                            renderNotifications();
+                        })
+                        .catch((error) => {
+                            console.error("Error deleting notifications: ", error);
+                            showToast('Erreur lors de la suppression des notifications', 'error');
+                        });
+                }
+            });
+
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}Tab`).classList.add('active');
+                    
+                    // Render specific tab content
+                    if (tabId === 'favorites') {
+                        renderFavorites();
+                    } else if (tabId === 'submissions') {
+                        renderSubmissions();
+                    } else if (tabId === 'downloads') {
+                        renderDownloads();
+                    }
+                });
+            });
+
+            // File upload styling
+            document.querySelectorAll('input[type="file"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const fileName = this.files[0] ? this.files[0].name : 'Aucun fichier choisi';
+                    if (this.id === 'examFile') {
+                        examFileBtn.textContent = fileName;
+                    } else if (this.id === 'solutionFile') {
+                        solutionFileBtn.textContent = fileName;
+                    }
+                });
+            });
+
+            // Search functionality
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // Filter functionality
+            filterClass.addEventListener('change', renderExamsPage);
+            filterSerie.addEventListener('change', renderExamsPage);
+            filterSubject.addEventListener('change', renderExamsPage);
+
+            // Transfer functionality
+            searchUser.addEventListener('input', renderUserList);
+            transferBtn.addEventListener('click', transferExam);
+
+            // Logout functionality
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // Profile editing
+            editProfileBtn.addEventListener('click', () => {
+                // Populate form with current user data
+                editName.value = userData.name;
+                editSchool.value = userData.school;
+                editClass.value = userData.class;
+                
+                // Show form, hide display
+                profileDisplay.classList.add('hidden');
+                profileForm.classList.add('active');
+            });
+
+            cancelEditProfile.addEventListener('click', () => {
+                // Show display, hide form
+                profileDisplay.classList.remove('hidden');
+                profileForm.classList.remove('active');
+            });
+
+            updateProfileForm.addEventListener('submit', handleUpdateProfile);
+
+            // Handle browser navigation
+            window.addEventListener('hashchange', handleHashChange);
+            handleHashChange();
+
+            // Firebase Auth State Observer
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData(user.uid);
+                    app.style.display = 'block';
+                    
+                    // Fermer toutes les modales d'authentification
+                    loginModal.classList.remove('active');
+                    registerModal.classList.remove('active');
+                    forgotPasswordModal.classList.remove('active');
+                    warningModal.classList.remove('active');
+                } else {
+                    currentUser = null;
+                    userData = null;
+                    app.style.display = 'none';
+                    
+                    // Vérifier si l'utilisateur a déjà accepté l'avertissement
+                    const hasAcceptedWarning = localStorage.getItem('hosbac-warning-accepted');
+                    
+                    // Afficher la modale appropriée
+                    if (hasAcceptedWarning) {
+                        // Afficher la connexion si l'avertissement a été accepté
+                        if (!loginModal.classList.contains('active') && 
+                            !registerModal.classList.contains('active') &&
+                            !forgotPasswordModal.classList.contains('active')) {
+                            loginModal.classList.add('active');
+                        }
+                    } else {
+                        // Afficher l'avertissement s'il n'a pas encore été accepté
+                        warningModal.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        // Authentication Handlers
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showLoading(loginBtn, loginBtnText, loginLoading);
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                showToast('Connexion réussie!', 'success');
+                loginModal.classList.remove('active');
+            } catch (error) {
+                console.error("Login error:", error);
+                showToast(getAuthErrorMessage(error), 'error');
+            } finally {
+                hideLoading(loginBtn, loginBtnText, loginLoading);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const school = document.getElementById('regSchool').value;
+            const userClassValue = document.getElementById('regClass').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showToast('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            
+            showLoading(registerBtn, registerBtnText, registerLoading);
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Create user document in Firestore
+                await usersRef.doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    school: school,
+                    class: userClassValue,
+                    points: 5, // Initial points
+                    submissions: 0,
+                    solutions: 0,
+                    downloads: 0,
+                    favorites: [],
+                    downloadedExams: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isAdmin: email === "mickaelpcs14@gmail.com"
+                });
+                
+                showToast('Inscription réussie!', 'success');
+                registerModal.classList.remove('active');
+            } catch (error) {
+                console.error("Registration error:", error);
+                showToast(getAuthErrorMessage(error), 'error');
+            } finally {
+                hideLoading(registerBtn, registerBtnText, registerLoading);
+            }
+        }
+
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value;
+            
+            showLoading(forgotPasswordBtn, forgotPasswordBtnText, forgotPasswordLoading);
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast('Lien de réinitialisation envoyé à votre email', 'info');
+                forgotPasswordModal.classList.remove('active');
+                loginModal.classList.add('active');
+            } catch (error) {
+                console.error("Password reset error:", error);
+                showToast(getAuthErrorMessage(error), 'error');
+            } finally {
+                hideLoading(forgotPasswordBtn, forgotPasswordBtnText, forgotPasswordLoading);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                showToast('Déconnexion réussie', 'info');
+                app.style.display = 'none';
+                
+                // Vérifier si l'utilisateur a déjà accepté l'avertissement
+                const hasAcceptedWarning = localStorage.getItem('hosbac-warning-accepted');
+                
+                if (hasAcceptedWarning) {
+                    loginModal.classList.add('active');
+                } else {
+                    warningModal.classList.add('active');
+                }
+            } catch (error) {
+                console.error("Logout error:", error);
+                showToast('Erreur lors de la déconnexion', 'error');
+            }
+        }
+
+        // User Data Management
+        async function loadUserData(uid) {
+            try {
+                const userDoc = await usersRef.doc(uid).get();
+                if (userDoc.exists) {
+                    userData = userDoc.data();
+                    userData.id = uid;
+                    
+                    // Check if admin
+                    if (userData.isAdmin) {
+                        adminNav.style.display = 'block';
+                    }
+                    
+                    updateUserInfo();
+                    loadExams();
+                    loadNotifications();
+                    
+                    // Navigate to home page
+                    navigateTo('accueil');
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                showToast('Erreur lors du chargement des données utilisateur', 'error');
+            }
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            
+            showLoading(saveProfileBtn, saveProfileBtnText, saveProfileLoading);
+            
+            try {
+                await usersRef.doc(currentUser.uid).update({
+                    name: editName.value,
+                    school: editSchool.value,
+                    class: editClass.value
+                });
+                
+                // Update local user data
+                userData.name = editName.value;
+                userData.school = editSchool.value;
+                userData.class = editClass.value;
+                
+                updateUserInfo();
+                
+                // Show display, hide form
+                profileDisplay.classList.remove('hidden');
+                profileForm.classList.remove('active');
+                
+                showToast('Profil mis à jour avec succès!', 'success');
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                showToast('Erreur lors de la mise à jour du profil', 'error');
+            } finally {
+                hideLoading(saveProfileBtn, saveProfileBtnText, saveProfileLoading);
+            }
+        }
+
+        // Exam Management
+        async function handleAddExam(e) {
+            e.preventDefault();
+            const subject = document.getElementById('subject').value;
+            const classValue = document.getElementById('class').value;
+            const serie = document.getElementById('serie').value;
+            const examName = document.getElementById('examName').value;
+            const examFile = document.getElementById('examFile').files[0];
+            const solutionFile = document.getElementById('solutionFile').files[0];
+            
+            if (!examFile) {
+                showToast('Veuillez sélectionner un fichier PDF pour l\'épreuve', 'error');
+                return;
+            }
+            
+            showLoading(submitExamBtn, submitExamBtnText, submitExamLoading);
+            
+            try {
+                // Upload exam file to Cloudinary
+                const examFileUrl = await uploadToCloudinary(examFile);
+                
+                // Upload solution file to Cloudinary if provided
+                let solutionFileUrl = null;
+                if (solutionFile) {
+                    solutionFileUrl = await uploadToCloudinary(solutionFile);
+                }
+                
+                // Create exam document in Firestore
+                const examData = {
+                    subject: subject,
+                    class: classValue,
+                    serie: serie,
+                    name: examName,
+                    examFileUrl: examFileUrl,
+                    solutionFileUrl: solutionFileUrl,
+                    authorId: currentUser.uid,
+                    authorName: userData.name,
+                    points: solutionFileUrl ? 2 : 0,
+                    approved: userData.isAdmin, // Auto-approve if admin
+                    date: firebase.firestore.FieldValue.serverTimestamp(),
+                    downloads: 0,
+                    favorites: 0,
+                    favoritedBy: []
+                };
+                
+                await examsRef.add(examData);
+                
+                // Update user stats
+                await usersRef.doc(currentUser.uid).update({
+                    submissions: firebase.firestore.FieldValue.increment(1),
+                    solutions: solutionFileUrl ? firebase.firestore.FieldValue.increment(1) : firebase.firestore.FieldValue.increment(0)
+                });
+                
+                // Add notification for admin if not admin
+                if (!userData.isAdmin) {
+                    await notificationsRef.add({
+                        title: "Nouvelle soumission",
+                        message: `${userData.name} a soumis une nouvelle épreuve: ${examName}`,
+                        time: new Date(),
+                        type: "submission",
+                        read: false,
+                        userId: "admin" // This would need to be the actual admin user ID
+                    });
+                }
+                
+                showToast('Épreuve soumise avec succès! Elle sera examinée par un administrateur.', 'success');
+                addExamModal.classList.remove('active');
+                addExamForm.reset();
+                examFileBtn.textContent = 'Choisir un fichier';
+                solutionFileBtn.textContent = 'Choisir un fichier';
+                
+                // Reload exams
+                loadExams();
+            } catch (error) {
+                console.error("Error adding exam:", error);
+                showToast('Erreur lors de l\'ajout de l\'épreuve', 'error');
+            } finally {
+                hideLoading(submitExamBtn, submitExamBtnText, submitExamLoading);
+            }
+        }
+
+        async function uploadToCloudinary(file) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', uploadPreset);
+                
+                fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.secure_url) {
+                        resolve(data.secure_url);
+                    } else {
+                        reject(new Error('Upload failed'));
+                    }
+                })
+                .catch(error => {
+                    reject(error);
+                });
+            });
+        }
+
+        async function loadExams() {
+            try {
+                let query = examsRef;
+                
+                // If not admin, only show approved exams
+                if (!userData.isAdmin) {
+                    query = query.where("approved", "==", true);
+                }
+                
+                const querySnapshot = await query.orderBy("date", "desc").get();
+                exams = [];
+                pendingSubmissions = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const exam = doc.data();
+                    exam.id = doc.id;
+                    exams.push(exam);
+                    
+                    if (!exam.approved) {
+                        pendingSubmissions.push(exam);
+                    }
+                });
+                
+                renderAllPages();
+            } catch (error) {
+                console.error("Error loading exams:", error);
+                showToast('Erreur lors du chargement des épreuves', 'error');
+            }
+        }
+
+        async function downloadExam(examId) {
+            const exam = exams.find(e => e.id === examId);
+            if (!exam) return;
+            
+            // Check if it's a solution and user has enough points
+            if (exam.solutionFileUrl && exam.authorId !== currentUser.uid) {
+                if (userData.points < exam.points) {
+                    showToast(`Points insuffisants. Il vous faut ${exam.points} points pour accéder au corrigé.`, 'error');
+                    return;
+                }
+                
+                // Use Cloud Function for secure transaction
+                const handleExamDownload = functions.httpsCallable('handleExamDownload');
+                
+                try {
+                    const result = await handleExamDownload({
+                        examId: examId,
+                        userId: currentUser.uid,
+                        authorId: exam.authorId,
+                        points: exam.points
+                    });
+                    
+                    showToast(result.data.message, 'success');
+                } catch (error) {
+                    console.error("Error calling Cloud Function:", error);
+                    showToast('Erreur lors du téléchargement', 'error');
+                    return;
+                }
+            }
+            
+            // Increment download count
+            await examsRef.doc(examId).update({
+                downloads: firebase.firestore.FieldValue.increment(1)
+            });
+            
+            // Update user downloads count
+            await usersRef.doc(currentUser.uid).update({
+                downloads: firebase.firestore.FieldValue.increment(1)
+            });
+            
+            // Add to user's downloaded exams if not already there
+            if (!userData.downloadedExams.includes(examId)) {
+                await usersRef.doc(currentUser.uid).update({
+                    downloadedExams: firebase.firestore.FieldValue.arrayUnion(examId)
+                });
+            }
+            
+            // Add notification for exam author
+            if (exam.authorId !== currentUser.uid) {
+                await notificationsRef.add({
+                    userId: exam.authorId,
+                    title: "Nouveau téléchargement",
+                    message: `${userData.name} a téléchargé votre épreuve: ${exam.name}`,
+                    time: new Date(),
+                    type: "download",
+                    read: false
+                });
+            }
+            
+            // Reload user data to get updated points
+            loadUserData(currentUser.uid);
+            
+            // Simulate download
+            showToast('Téléchargement en cours...', 'info');
+            
+            // In a real app, this would actually download the file
+            setTimeout(() => {
+                showToast('Téléchargement terminé!', 'success');
+            }, 1500);
+        }
+
+        async function toggleFavorite(examId) {
+            const exam = exams.find(e => e.id === examId);
+            if (!exam) return;
+            
+            const isFavorite = userData.favorites.includes(examId);
+            
+            if (isFavorite) {
+                // Remove from favorites
+                await usersRef.doc(currentUser.uid).update({
+                    favorites: firebase.firestore.FieldValue.arrayRemove(examId)
+                });
+                
+                await examsRef.doc(examId).update({
+                    favorites: firebase.firestore.FieldValue.increment(-1),
+                    favoritedBy: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+                });
+                
+                showToast('Épreuve retirée des favoris', 'info');
+            } else {
+                // Add to favorites
+                await usersRef.doc(currentUser.uid).update({
+                    favorites: firebase.firestore.FieldValue.arrayUnion(examId)
+                });
+                
+                await examsRef.doc(examId).update({
+                    favorites: firebase.firestore.FieldValue.increment(1),
+                    favoritedBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                });
+                
+                showToast('Épreuve ajoutée aux favoris', 'success');
+                
+                // Add notification for exam author
+                if (exam.authorId !== currentUser.uid) {
+                    await notificationsRef.add({
+                        userId: exam.authorId,
+                        title: "Nouveau favori",
+                        message: `${userData.name} a ajouté votre épreuve à ses favoris: ${exam.name}`,
+                        time: new Date(),
+                        type: "favorite",
+                        read: false
+                    });
+                }
+            }
+            
+            // Update local user data
+            if (isFavorite) {
+                userData.favorites = userData.favorites.filter(id => id !== examId);
+            } else {
+                userData.favorites.push(examId);
+            }
+            
+            updateUserInfo();
+            renderAllPages();
+        }
+
+        // Notifications
+        async function loadNotifications() {
+            if (!currentUser) return;
+            
+            try {
+                const querySnapshot = await notificationsRef
+                    .where("userId", "==", currentUser.uid)
+                    .orderBy("time", "desc")
+                    .get();
+                
+                notifications = [];
+                querySnapshot.forEach((doc) => {
+                    const notification = doc.data();
+                    notification.id = doc.id;
+                    notifications.push(notification);
+                });
+                
+                renderNotifications();
+            } catch (error) {
+                console.error("Error loading notifications:", error);
+            }
+        }
+
+        // Admin Functions
+        async function approveSubmission(examId) {
+            try {
+                await examsRef.doc(examId).update({
+                    approved: true
+                });
+                
+                const exam = exams.find(e => e.id === examId);
+                
+                // Award points to author
+                await usersRef.doc(exam.authorId).update({
+                    points: firebase.firestore.FieldValue.increment(1), // 1 point for exam
+                    submissions: firebase.firestore.FieldValue.increment(1)
+                });
+                
+                if (exam.solutionFileUrl) {
+                    await usersRef.doc(exam.authorId).update({
+                        points: firebase.firestore.FieldValue.increment(3), // 3 additional points for solution
+                        solutions: firebase.firestore.FieldValue.increment(1)
+                    });
+                }
+                
+                // Add notification for author
+                await notificationsRef.add({
+                    userId: exam.authorId,
+                    title: "Épreuve approuvée",
+                    message: `Votre épreuve "${exam.name}" a été approuvée et est maintenant visible par tous les utilisateurs.`,
+                    time: new Date(),
+                    type: "approval",
+                    read: false
+                });
+                
+                showToast('Épreuve approuvée', 'success');
+                loadExams();
+            } catch (error) {
+                console.error("Error approving submission:", error);
+                showToast('Erreur lors de l\'approbation de l\'épreuve', 'error');
+            }
+        }
+
+        async function rejectSubmission(examId) {
+            try {
+                const exam = exams.find(e => e.id === examId);
+                
+                // Delete exam from Firestore
+                await examsRef.doc(examId).delete();
+                
+                // Add notification for author
+                await notificationsRef.add({
+                    userId: exam.authorId,
+                    title: "Épreuve rejetée",
+                    message: `Votre épreuve "${exam.name}" a été rejetée par l'administrateur.`,
+                    time: new Date(),
+                    type: "rejection",
+                    read: false
+                });
+                
+                showToast('Épreuve rejetée', 'info');
+                loadExams();
+            } catch (error) {
+                console.error("Error rejecting submission:", error);
+                showToast('Erreur lors du rejet de l\'épreuve', 'error');
+            }
+        }
+
+        // Utility Functions
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = 'toast';
+            toast.classList.add(type, 'show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateUserInfo() {
+            if (userData) {
+                userPoints.textContent = `${userData.points} pts`;
+                userAvatar.textContent = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                userName.textContent = userData.name;
+                userEmail.textContent = userData.email;
+                userSchool.textContent = userData.school;
+                userClass.textContent = userData.class;
+                profileAvatar.textContent = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                profilePoints.textContent = `${userData.points} points`;
+                
+                // Update stats
+                document.getElementById('submittedExams').textContent = userData.submissions;
+                document.getElementById('submittedSolutions').textContent = userData.solutions;
+                document.getElementById('downloadsCount').textContent = userData.downloads;
+                document.getElementById('favoritesCount').textContent = userData.favorites.length;
+            }
+        }
+
+        function renderAllPages() {
+            renderHomePage();
+            renderNotifications();
+            renderExamsPage();
+            renderProfilePage();
+            
+            if (userData && userData.isAdmin) {
+                renderAdminPage();
+            }
+        }
+
+        function renderHomePage() {
+            const homeExamsGrid = document.getElementById('homeExamsGrid');
+            const approvedExams = exams.filter(exam => exam.approved).slice(0, 6);
+            
+            if (approvedExams.length === 0) {
+                homeExamsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>Aucune épreuve disponible</h3>
+                        <p>Les épreuves approuvées apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            homeExamsGrid.innerHTML = '';
+            approvedExams.forEach(exam => {
+                const examCard = createExamCard(exam);
+                homeExamsGrid.appendChild(examCard);
+            });
+        }
+
+        function renderExamsPage() {
+            const examsGrid = document.getElementById('examsGrid');
+            const filterClassValue = filterClass.value;
+            const filterSerieValue = filterSerie.value;
+            const filterSubjectValue = filterSubject.value;
+            
+            let filteredExams = exams.filter(exam => exam.approved);
+            
+            if (filterClassValue) {
+                filteredExams = filteredExams.filter(exam => exam.class === filterClassValue);
+            }
+            
+            if (filterSerieValue) {
+                filteredExams = filteredExams.filter(exam => exam.serie === filterSerieValue);
+            }
+            
+            if (filterSubjectValue) {
+                filteredExams = filteredExams.filter(exam => exam.subject === filterSubjectValue);
+            }
+            
+            if (filteredExams.length === 0) {
+                examsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>Aucune épreuve disponible</h3>
+                        <p>Les épreuves approuvées apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            examsGrid.innerHTML = '';
+            filteredExams.forEach(exam => {
+                const examCard = createExamCard(exam);
+                examsGrid.appendChild(examCard);
+            });
+        }
+
+        function renderNotifications() {
+            const notificationsList = document.getElementById('notificationsList');
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-bell"></i>
+                        <h3>Aucune notification</h3>
+                        <p>Vos notifications apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            notificationsList.innerHTML = '';
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('div');
+                notificationItem.className = 'notification-item';
+                notificationItem.innerHTML = `
+                    <div class="notification-icon">
+                        <i class="fas fa-${getNotificationIcon(notification.type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${notification.title}</div>
+                        <div class="notification-message">${notification.message}</div>
+                        <div class="notification-time">${formatDate(notification.time)}</div>
+                    </div>
+                    <div class="notification-actions">
+                        <button class="btn-icon delete-notification" data-id="${notification.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                notificationsList.appendChild(notificationItem);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-notification').forEach(button => {
+                button.addEventListener('click', function() {
+                    const notificationId = this.getAttribute('data-id');
+                    notificationsRef.doc(notificationId).delete()
+                        .then(() => {
+                            showToast('Notification supprimée', 'info');
+                            loadNotifications();
+                        })
+                        .catch((error) => {
+                            console.error("Error deleting notification: ", error);
+                            showToast('Erreur lors de la suppression de la notification', 'error');
+                        });
+                });
+            });
+        }
+
+        function renderProfilePage() {
+            updateUserInfo();
+            renderFavorites();
+            renderSubmissions();
+            renderDownloads();
+        }
+
+        function renderFavorites() {
+            const favoritesGrid = document.getElementById('favoritesGrid');
+            const favoriteExams = exams.filter(exam => 
+                userData.favorites.includes(exam.id)
+            );
+            
+            if (favoriteExams.length === 0) {
+                favoritesGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-heart"></i>
+                        <h3>Aucun favori</h3>
+                        <p>Les épreuves que vous ajoutez en favoris apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            favoritesGrid.innerHTML = '';
+            favoriteExams.forEach(exam => {
+                const examCard = createExamCard(exam);
+                favoritesGrid.appendChild(examCard);
+            });
+        }
+
+        function renderSubmissions() {
+            const submissionsGrid = document.getElementById('submissionsGrid');
+            const userSubmissions = exams.filter(exam => 
+                exam.authorId === currentUser.uid
+            );
+            
+            if (userSubmissions.length === 0) {
+                submissionsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-upload"></i>
+                        <h3>Aucune soumission</h3>
+                        <p>Les épreuves que vous soumettez apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            submissionsGrid.innerHTML = '';
+            userSubmissions.forEach(exam => {
+                const examCard = createExamCard(exam);
+                submissionsGrid.appendChild(examCard);
+            });
+        }
+
+        function renderDownloads() {
+            const downloadsGrid = document.getElementById('downloadsGrid');
+            const downloadedExams = exams.filter(exam => 
+                userData.downloadedExams.includes(exam.id)
+            );
+            
+            if (downloadedExams.length === 0) {
+                downloadsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-download"></i>
+                        <h3>Aucun téléchargement</h3>
+                        <p>Les épreuves que vous téléchargez apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            downloadsGrid.innerHTML = '';
+            downloadedExams.forEach(exam => {
+                const examCard = createExamCard(exam);
+                downloadsGrid.appendChild(examCard);
+            });
+        }
+
+        function renderAdminPage() {
+            // Update admin stats
+            // Note: In a real app, you would need to query these counts from Firestore
+            document.getElementById('adminUsersCount').textContent = "N/A";
+            document.getElementById('adminExamsCount').textContent = exams.length;
+            document.getElementById('adminSolutionsCount').textContent = exams.filter(e => e.solutionFileUrl).length;
+            document.getElementById('adminDownloadsCount').textContent = exams.reduce((sum, exam) => sum + exam.downloads, 0);
+            
+            // Render pending submissions
+            const moderationList = document.getElementById('moderationList');
+            
+            if (pendingSubmissions.length === 0) {
+                moderationList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Aucune soumission en attente</h3>
+                        <p>Les nouvelles soumissions d'épreuves apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            moderationList.innerHTML = '';
+            pendingSubmissions.forEach(submission => {
+                const submissionItem = document.createElement('div');
+                submissionItem.className = 'notification-item';
+                submissionItem.innerHTML = `
+                    <div class="notification-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${submission.name}</div>
+                        <div class="notification-message">
+                            <strong>${submission.subject}</strong> - ${submission.class} ${submission.serie}<br>
+                            Soumis par: ${submission.authorName}
+                        </div>
+                        <div class="notification-time">${formatDate(submission.date)}</div>
+                    </div>
+                    <div class="notification-actions">
+                        <button class="btn-icon approve-submission" data-id="${submission.id}">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn-icon reject-submission" data-id="${submission.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                moderationList.appendChild(submissionItem);
+            });
+            
+            // Add event listeners to approve/reject buttons
+            document.querySelectorAll('.approve-submission').forEach(button => {
+                button.addEventListener('click', function() {
+                    const submissionId = this.getAttribute('data-id');
+                    approveSubmission(submissionId);
+                });
+            });
+            
+            document.querySelectorAll('.reject-submission').forEach(button => {
+                button.addEventListener('click', function() {
+                    const submissionId = this.getAttribute('data-id');
+                    rejectSubmission(submissionId);
+                });
+            });
+        }
+
+        function createExamCard(exam) {
+            const examCard = document.createElement('div');
+            examCard.className = 'glass-card exam-card';
+            examCard.innerHTML = `
+                <div class="exam-header">
+                    <div class="exam-subject">${exam.subject}</div>
+                    <div class="exam-class">${exam.class} ${exam.serie}</div>
+                </div>
+                <div class="exam-name">${exam.name}</div>
+                <div class="exam-actions">
+                    <button class="btn ${exam.solutionFileUrl ? 'btn-primary' : 'btn-secondary'} download-exam" data-id="${exam.id}">
+                        <i class="fas fa-download"></i> ${exam.solutionFileUrl ? `Voir (${exam.points} pts)` : 'Télécharger'}
+                    </button>
+                    <div class="exam-options">
+                        <button class="btn-icon favorite-exam" data-id="${exam.id}">
+                            <i class="${userData.favorites.includes(exam.id) ? 'fas' : 'far'} fa-heart"></i>
+                        </button>
+                        <button class="btn-icon transfer-exam" data-id="${exam.id}">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        ${userData.isAdmin ? `<button class="btn-icon delete-exam" data-id="${exam.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const downloadBtn = examCard.querySelector('.download-exam');
+            const favoriteBtn = examCard.querySelector('.favorite-exam');
+            const transferBtn = examCard.querySelector('.transfer-exam');
+            const deleteBtn = examCard.querySelector('.delete-exam');
+            
+            downloadBtn.addEventListener('click', function() {
+                downloadExam(exam.id);
+            });
+            
+            favoriteBtn.addEventListener('click', function() {
+                toggleFavorite(exam.id);
+            });
+            
+            transferBtn.addEventListener('click', function() {
+                openTransferModal(exam.id);
+            });
+            
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    if (confirm('Êtes-vous sûr de vouloir supprimer cette épreuve ?')) {
+                        examsRef.doc(exam.id).delete()
+                            .then(() => {
+                                showToast('Épreuve supprimée', 'info');
+                                loadExams();
+                            })
+                            .catch((error) => {
+                                console.error("Error deleting exam: ", error);
+                                showToast('Erreur lors de la suppression de l\'épreuve', 'error');
+                            });
+                    }
+                });
+            }
+            
+            return examCard;
+        }
+
+        function openTransferModal(examId) {
+            // This would need to be implemented with real user data
+            showToast('Fonctionnalité de transfert à implémenter', 'info');
+        }
+
+        function renderUserList() {
+            // This would need to be implemented with real user data
+            userList.innerHTML = '<p style="text-align: center; padding: 1rem;">Fonctionnalité à implémenter</p>';
+        }
+
+        function transferExam() {
+            // This would need to be implemented with real user data
+            showToast('Fonctionnalité de transfert à implémenter', 'info');
+            transferModal.classList.remove('active');
+        }
+
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const searchResults = document.getElementById('searchResults');
+            
+            if (!searchTerm) {
+                searchResults.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>Aucun résultat</h3>
+                        <p>Utilisez la barre de recherche pour trouver des épreuves</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredExams = exams.filter(exam => 
+                exam.approved && (
+                    exam.name.toLowerCase().includes(searchTerm) ||
+                    exam.subject.toLowerCase().includes(searchTerm) ||
+                    exam.class.toLowerCase().includes(searchTerm) ||
+                    exam.serie.toLowerCase().includes(searchTerm) ||
+                    exam.authorName.toLowerCase().includes(searchTerm)
+                )
+            );
+            
+            if (filteredExams.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>Aucun résultat</h3>
+                        <p>Aucune épreuve ne correspond à votre recherche</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            searchResults.innerHTML = '';
+            filteredExams.forEach(exam => {
+                const examCard = createExamCard(exam);
+                searchResults.appendChild(examCard);
+            });
+        }
+
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'download': return 'download';
+                case 'favorite': return 'heart';
+                case 'transfer': return 'share-alt';
+                case 'approval': return 'check-circle';
+                case 'rejection': return 'times-circle';
+                case 'submission': return 'file-upload';
+                case 'points': return 'coins';
+                default: return 'bell';
+            }
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'Date inconnue';
+            
+            let date;
+            if (timestamp.toDate) {
+                date = timestamp.toDate();
+            } else if (timestamp instanceof Date) {
+                date = timestamp;
+            } else {
+                date = new Date(timestamp);
+            }
+            
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} min`;
+            if (diffHours < 24) return `Il y a ${diffHours} h`;
+            if (diffDays < 7) return `Il y a ${diffDays} j`;
+            
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        function navigateTo(page) {
+            // Update active nav link
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Show corresponding page
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+            
+            // Update URL hash
+            window.location.hash = page;
+            
+            // Render specific page content if needed
+            if (page === 'admin' && userData && userData.isAdmin) {
+                renderAdminPage();
+            } else if (page === 'notifications') {
+                renderNotifications();
+            } else if (page === 'examens') {
+                renderExamsPage();
+            } else if (page === 'profil') {
+                renderProfilePage();
+            } else if (page === 'accueil') {
+                renderHomePage();
+            }
+        }
+
+        function handleHashChange() {
+            const hash = window.location.hash.substring(1) || 'accueil';
+            navigateTo(hash);
+        }
+
+        function showLoading(button, textElement, loadingElement) {
+            textElement.style.display = 'none';
+            loadingElement.style.display = 'inline-block';
+            button.disabled = true;
+        }
+
+        function hideLoading(button, textElement, loadingElement) {
+            textElement.style.display = 'inline-block';
+            loadingElement.style.display = 'none';
+            button.disabled = false;
+        }
+
+        function getAuthErrorMessage(error) {
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    return 'Adresse email invalide';
+                case 'auth/user-disabled':
+                    return 'Ce compte a été désactivé';
+                case 'auth/user-not-found':
+                    return 'Aucun compte trouvé avec cet email';
+                case 'auth/wrong-password':
+                    return 'Mot de passe incorrect';
+                case 'auth/email-already-in-use':
+                    return 'Un compte existe déjà avec cet email';
+                case 'auth/weak-password':
+                    return 'Le mot de passe est trop faible';
+                case 'auth/network-request-failed':
+                    return 'Erreur de réseau. Vérifiez votre connexion internet';
+                default:
+                    return 'Une erreur est survenue. Veuillez réessayer';
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
