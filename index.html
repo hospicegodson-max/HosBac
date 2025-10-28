@@ -1945,9 +1945,11 @@
             }
         }
 
-        // Exam Management - CORRECTION: Structure des données pour respecter les règles de sécurité
+        // CORRECTION: Fonction de soumission d'épreuve révisée pour respecter les règles Firestore
         async function handleAddExam(e) {
             e.preventDefault();
+            
+            // Récupération des valeurs du formulaire
             const subject = document.getElementById('subject').value;
             const classValue = document.getElementById('class').value;
             const serie = document.getElementById('serie').value;
@@ -1955,81 +1957,114 @@
             const examFile = document.getElementById('examFile').files[0];
             const solutionFile = document.getElementById('solutionFile').files[0];
             
+            // Validation de base
             if (!examFile) {
                 showToast('Veuillez sélectionner un fichier PDF pour l\'épreuve', 'error');
+                return;
+            }
+            
+            if (!currentUser) {
+                showToast('Vous devez être connecté pour soumettre une épreuve', 'error');
                 return;
             }
             
             showLoading(submitExamBtn, submitExamBtnText, submitExamLoading);
             
             try {
-                // Upload exam file to Cloudinary
+                // Upload du fichier d'épreuve vers Cloudinary
                 const examFileUrl = await uploadToCloudinary(examFile);
                 
-                // Upload solution file to Cloudinary if provided
+                // Upload du fichier de solution vers Cloudinary (si fourni)
                 let solutionFileUrl = null;
                 if (solutionFile) {
                     solutionFileUrl = await uploadToCloudinary(solutionFile);
                 }
                 
-                // CORRECTION: Créer l'objet exam avec tous les champs requis pour les règles de sécurité
+                // CORRECTION: Construction de l'objet examData avec TOUS les champs requis
+                // selon les règles de sécurité Firestore
                 const examData = {
+                    // Champs OBLIGATOIRES pour les règles de sécurité
+                    authorId: currentUser.uid, // Doit être exactement firebase.auth().currentUser.uid
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // Doit être serverTimestamp()
+                    downloads: 0, // Doit être exactement 0 (nombre, sans guillemets)
+                    
+                    // Champs du formulaire (doivent avoir des valeurs non vides)
                     subject: subject,
                     class: classValue,
                     serie: serie,
                     name: examName,
                     examFileUrl: examFileUrl,
-                    solutionFileUrl: solutionFileUrl,
-                    authorId: currentUser.uid, // Champ requis par les règles
+                    
+                    // Champs optionnels mais avec valeurs par défaut
+                    solutionFileUrl: solutionFileUrl || null,
                     authorName: userData.name,
                     points: solutionFileUrl ? 2 : 0,
-                    approved: userData.role === "admin", // Auto-approve if admin
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // Champ requis par les règles
-                    downloads: 0, // Champ requis par les règles - initialisé à 0
+                    approved: userData.role === "admin",
                     favorites: 0,
                     favoritedBy: []
                 };
                 
+                // CORRECTION: Vérification finale que tous les champs requis sont présents
+                console.log('Données envoyées à Firestore:', examData);
+                
+                // Soumission à Firestore
                 await examsRef.add(examData);
                 
-                // Update user stats
+                // Mise à jour des statistiques utilisateur
                 await usersRef.doc(currentUser.uid).update({
                     submissions: firebase.firestore.FieldValue.increment(1),
                     solutions: solutionFileUrl ? firebase.firestore.FieldValue.increment(1) : firebase.firestore.FieldValue.increment(0)
                 });
                 
-                // Add notification for admin if not admin
+                // Notification pour les administrateurs si l'utilisateur n'est pas admin
                 if (userData.role !== "admin") {
-                    // CORRECTION: Trouver les utilisateurs admin pour leur envoyer une notification
                     const adminUsers = await usersRef.where("role", "==", "admin").get();
+                    const notificationPromises = [];
+                    
                     adminUsers.forEach((adminDoc) => {
-                        notificationsRef.add({
-                            title: "Nouvelle soumission",
-                            message: `${userData.name} a soumis une nouvelle épreuve: ${examName}`,
-                            time: new Date(),
-                            type: "submission",
-                            read: false,
-                            userId: adminDoc.id
-                        });
+                        notificationPromises.push(
+                            notificationsRef.add({
+                                title: "Nouvelle soumission",
+                                message: `${userData.name} a soumis une nouvelle épreuve: ${examName}`,
+                                time: firebase.firestore.FieldValue.serverTimestamp(),
+                                type: "submission",
+                                read: false,
+                                userId: adminDoc.id
+                            })
+                        );
                     });
+                    
+                    await Promise.all(notificationPromises);
                 }
                 
                 showToast('Épreuve soumise avec succès! Elle sera examinée par un administrateur.', 'success');
+                
+                // Réinitialisation du formulaire
                 addExamModal.classList.remove('active');
                 addExamForm.reset();
                 examFileBtn.textContent = 'Choisir un fichier';
                 solutionFileBtn.textContent = 'Choisir un fichier';
                 
-                // Reload exams
+                // Rechargement des épreuves
                 loadExams();
+                
             } catch (error) {
-                console.error("Error adding exam:", error);
-                showToast('Erreur lors de l\'ajout de l\'épreuve', 'error');
+                console.error("Erreur détaillée lors de l'ajout de l'épreuve:", error);
+                
+                // Messages d'erreur plus spécifiques
+                if (error.code === 'permission-denied') {
+                    showToast('Erreur de permission: Vérifiez que tous les champs requis sont correctement remplis', 'error');
+                } else if (error.code === 'invalid-argument') {
+                    showToast('Erreur: Certains champs ont des valeurs invalides', 'error');
+                } else {
+                    showToast('Erreur lors de l\'ajout de l\'épreuve: ' + error.message, 'error');
+                }
             } finally {
                 hideLoading(submitExamBtn, submitExamBtnText, submitExamLoading);
             }
         }
 
+        // CORRECTION: Fonction utilitaire pour upload vers Cloudinary
         async function uploadToCloudinary(file) {
             return new Promise((resolve, reject) => {
                 const formData = new FormData();
@@ -2040,16 +2075,22 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.secure_url) {
                         resolve(data.secure_url);
                     } else {
-                        reject(new Error('Upload failed'));
+                        reject(new Error('Upload failed: No secure_url in response'));
                     }
                 })
                 .catch(error => {
-                    reject(error);
+                    console.error('Cloudinary upload error:', error);
+                    reject(new Error('Erreur lors de l\'upload du fichier: ' + error.message));
                 });
             });
         }
